@@ -3,6 +3,7 @@
 package fiber
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
@@ -201,7 +202,7 @@ func AuthenticationMiddleware(j JWTConfig) func(*fiber.Ctx) error {
 }
 
 // GenerateJWTSignedString ...
-func GenerateJWTSignedString(claimMaps fiber.Map) string {
+func GenerateJWTSignedString(claimMaps fiber.Map) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = jwtConfig.Expiration
@@ -210,14 +211,26 @@ func GenerateJWTSignedString(claimMaps fiber.Map) string {
 		claims[key] = value
 	}
 
-	t, _ := token.SignedString(jwtConfig.SecretKey)
+	t, err := token.SignedString(jwtConfig.SecretKey)
 
-	if jwtConfig.SetCookies {
+	if jwtConfig.SetCookies && err == nil {
 		Ctx.c.Cookie(&fiber.Cookie{
 			Name:   "token",
 			Value:  t,
 			MaxAge: jwtConfig.CookieMaxAge,
 		})
 	}
-	return t
+
+	return t, err
+}
+
+// GetJWTClaimOfType ...
+func GetJWTClaimOfType(key string, valueType interface{}) error {
+	userInfoJSON, err := json.Marshal(GetJWTClaim(key))
+
+	if err == nil {
+		err = json.Unmarshal(userInfoJSON, &valueType)
+	}
+
+	return err
 }
