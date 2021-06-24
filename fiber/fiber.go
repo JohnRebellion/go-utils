@@ -10,6 +10,7 @@ import (
 
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/gofiber/fiber/v2"
+	jwtware "github.com/gofiber/jwt/v2"
 )
 
 // Context GoFiber Context
@@ -17,8 +18,17 @@ type Context struct {
 	c *fiber.Ctx
 }
 
+// JWTConfig configuration for JWT
+type JWTConfig struct {
+	Expiration   int64
+	CookieMaxAge int
+	SetCookies   bool
+	SecretKey    []byte
+}
+
 // Ctx Context to be initiated by the New function
 var Ctx Context
+var jwtConfig JWTConfig
 
 // New Copies GoFiber context as new current context
 func (ctx *Context) New(c *fiber.Ctx) {
@@ -180,4 +190,34 @@ func LogError(err error) {
 	if err != nil {
 		log.Println(err.Error())
 	}
+}
+
+// AuthenticationMiddleware ...
+func AuthenticationMiddleware(j JWTConfig) func(*fiber.Ctx) error {
+	jwtConfig = j
+	return jwtware.New(jwtware.Config{
+		SigningKey: jwtConfig.SecretKey,
+	})
+}
+
+// GenerateJWTSignedString ...
+func GenerateJWTSignedString(claimMaps fiber.Map) string {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["exp"] = jwtConfig.Expiration
+
+	for key, value := range claimMaps {
+		claims[key] = value
+	}
+
+	t, _ := token.SignedString(jwtConfig.SecretKey)
+
+	if jwtConfig.SetCookies {
+		Ctx.c.Cookie(&fiber.Cookie{
+			Name:   "token",
+			Value:  t,
+			MaxAge: jwtConfig.CookieMaxAge,
+		})
+	}
+	return t
 }
