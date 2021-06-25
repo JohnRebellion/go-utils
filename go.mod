@@ -19,6 +19,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
+	github.com/mattn/go-sqlite3 v1.14.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.27.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
@@ -28,5 +29,6 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gorm.io/driver/mysql v1.1.1
 	gorm.io/driver/postgres v1.1.0
+	gorm.io/driver/sqlite v1.1.4 // indirect
 	gorm.io/gorm v1.21.11
 )

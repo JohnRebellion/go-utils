@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	_ "github.com/go-sql-driver/mysql" // initate go sql driver
@@ -26,6 +27,11 @@ func MySQLConnect(username, password, host, databaseName string) {
 	}
 
 	DBConn, Err = gorm.Open(mysql.Open(fmt.Sprintf("%s:%s@%s/%s?parseTime=true", username, password, host, databaseName)), &gorm.Config{})
+}
+
+// SQLiteConnect ...
+func SQLiteConnect(filename string) {
+	DBConn, Err = gorm.Open(sqlite.Open(filename), &gorm.Config{})
 }
 
 // PostgreSQLConnect Connect to a PostgreSQL database
