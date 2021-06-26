@@ -8,6 +8,7 @@ import (
 	"log"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +22,7 @@ type Context struct {
 
 // JWTConfig configuration for JWT
 type JWTConfig struct {
-	Expiration   int64
+	Duration     time.Duration
 	CookieMaxAge int
 	SetCookies   bool
 	SecretKey    []byte
@@ -205,7 +206,7 @@ func AuthenticationMiddleware(j JWTConfig) func(*fiber.Ctx) error {
 func GenerateJWTSignedString(claimMaps fiber.Map) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["exp"] = jwtConfig.Expiration
+	claims["exp"] = time.Now().Add(jwtConfig.Duration).Unix()
 
 	for key, value := range claimMaps {
 		claims[key] = value
