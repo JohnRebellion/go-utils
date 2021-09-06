@@ -17,8 +17,8 @@ type C struct {
 }
 
 // New ...
-func (c *C) New(http.Client) {
-	c.Client = &http.Client{}
+func (c *C) New(client http.Client) {
+	c.Client = &client
 }
 
 // RequestJSON ...
