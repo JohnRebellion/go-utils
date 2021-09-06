@@ -22,7 +22,7 @@ func (c *C) New(http.Client) {
 }
 
 // RequestJSON ...
-func RequestJSON(method, url string, input, output interface{}, headers http.Header) error {
+func RequestJSON(method, url string, input, output interface{}, headers http.Header) (*http.Response, error) {
 	message, err := json.Marshal(input)
 
 	if err == nil {
@@ -34,12 +34,12 @@ func RequestJSON(method, url string, input, output interface{}, headers http.Hea
 			body, err := ioutil.ReadAll(resp.Body)
 
 			if err == nil {
-				return json.Unmarshal(body, &output)
+				return resp, json.Unmarshal(body, &output)
 			}
 		}
 	}
 
-	return err
+	return nil, err
 }
 
 // Request ...
