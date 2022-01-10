@@ -4,6 +4,7 @@ package fiber
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -45,42 +46,50 @@ type Message struct {
 	Status  string `json:"status"`
 }
 
-// ParseBody Parses the request body from the copied current context
-func ParseBody(in interface{}) error {
-	err := Ctx.c.BodyParser(in)
+func haveContext() error {
+	var err error
 
-	if err != nil {
-		LogError(err)
-		return Ctx.c.Status(503).SendString(err.Error())
+	if Ctx.c == nil {
+		return errors.New("No context.")
 	}
 
 	return err
 }
 
-// GetParamValue Gets the parameter value from the copied current context
-func GetParamValue(param string, message string) string {
-	paramValue := Ctx.c.Params(param)
+// ParseBody Parses the request body from the copied current context
+func ParseBody(in interface{}) error {
+	err := haveContext()
 
-	if paramValue == "" {
-		err := SendJSONMessage(message, false, 400)
-		LogError(err)
+	if err == nil {
+		err := Ctx.c.BodyParser(in)
+
+		if err != nil {
+			LogError(err)
+			return Ctx.c.Status(503).SendString(err.Error())
+		}
 	}
 
-	return paramValue
+	return err
 }
 
 // SendJSONMessage Sends JSON Message with HTTP Status code to current context
 func SendJSONMessage(message string, isSuccess bool, httpStatusCode int) error {
-	status := "failed"
+	err := haveContext()
 
-	if isSuccess {
-		status = "success"
+	if err == nil {
+		status := "failed"
+
+		if isSuccess {
+			status = "success"
+		}
+
+		return Ctx.c.Status(httpStatusCode).JSON(Message{
+			Message: message,
+			Status:  status,
+		})
 	}
 
-	return Ctx.c.Status(httpStatusCode).JSON(Message{
-		Message: message,
-		Status:  status,
-	})
+	return err
 }
 
 // SendSuccessResponse Wrapper function for SendJSONMessage of 200 Success
@@ -159,8 +168,15 @@ func CheckFieldLength(field, title string, max, min int) (ok bool, message strin
 
 // GetJWTClaims Get User JWT claims of the current context
 func GetJWTClaims() jwt.MapClaims {
-	userToken := Ctx.c.Locals("user").(*jwt.Token)
-	return userToken.Claims.(jwt.MapClaims)
+	err := haveContext()
+
+	if err == nil {
+		userToken := Ctx.c.Locals("user").(*jwt.Token)
+		return userToken.Claims.(jwt.MapClaims)
+	} else {
+		LogError(err)
+		return map[string]interface{}{}
+	}
 }
 
 // GetJWTClaim Wrapper function for getting a JWT claim by key
@@ -215,11 +231,15 @@ func GenerateJWTSignedString(claimMaps fiber.Map) (string, error) {
 	t, err := token.SignedString(jwtConfig.SecretKey)
 
 	if jwtConfig.SetCookies && err == nil {
-		Ctx.c.Cookie(&fiber.Cookie{
-			Name:   "token",
-			Value:  t,
-			MaxAge: jwtConfig.CookieMaxAge,
-		})
+		err := haveContext()
+
+		if err == nil {
+			Ctx.c.Cookie(&fiber.Cookie{
+				Name:   "token",
+				Value:  t,
+				MaxAge: jwtConfig.CookieMaxAge,
+			})
+		}
 	}
 
 	return t, err
