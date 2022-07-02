@@ -11,7 +11,7 @@ var twilioPhoneNumber string
 
 // NewClient ...
 func NewClient(accountSID, authToken, phoneNumber string) {
-	Client = twilio.NewRestClientWithParams(twilio.RestClientParams{
+	Client = twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username: accountSID,
 		Password: authToken,
 	})
@@ -24,5 +24,5 @@ func SendSMS(messageBody, phoneNumber string) (*openapi.ApiV2010Message, error) 
 	params.SetTo(phoneNumber)
 	params.SetFrom(twilioPhoneNumber)
 	params.SetBody(messageBody)
-	return Client.ApiV2010.CreateMessage(params)
+	return Client.Api.CreateMessage(params)
 }
